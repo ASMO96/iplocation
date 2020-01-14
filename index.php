@@ -11,6 +11,18 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+
+function ip_location($ip)
+{
+
+    $client = HttpClient::create();
+    $response = $client->request('GET', 'http://ip-api.com/json/' . $ip);
+    $result = $response->getContent();
+    $result = json_decode($result, false);
+    return $result;
+}
+
+
 class IP extends Command
 {
     // the name of the command (the part after "bin/console")
@@ -18,67 +30,34 @@ class IP extends Command
 
     protected function configure()
     {
-        $this
-            // the short description shown while running "php bin/console list"
-            ->setDescription('Creates a new user.')
-
-            // the full command description shown when running the command with
-            // the "--help" option
-            ->setHelp('This command allows you to create a user...');
-
-        $this
-            // ...
-            ->addArgument('ip',  InputArgument::REQUIRED , 'IP ')
-        ;
+        $this->setDescription('IP Location');
+        $this->addArgument('ip', InputArgument::REQUIRED, 'IP Field');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $output->writeln("The Country : " . ip_location($input->getArgument("ip") )->country );
+        $location = ip_location($input->getArgument("ip"));
+        $country = $location->country;
+        $output->writeln("The Country : " . $country);
         return 0;
     }
 }
 
 
-function ip_location($ip){
-
-    $client = HttpClient::create();
-
-    $response = $client->request('GET', 'http://ip-api.com/json/' . $ip);
 
 
-    $result = $response->getContent();
-
-    $result = json_decode($result, false);
-
-    return $result;
-
-}
-
-if (php_sapi_name() == "cli"){
-
-
-
+if (php_sapi_name() == "cli") {
     $application = new Application();
-
-    $application->add( new IP());
-
+    $application->add(new IP());
     $application->run();
 
-
-}
-else {
+} else {
 
     $app = new Silex\Application();
-
-    $app->get('/ahamad/{x}', function ($x) {
-        return $x;
-    });
-
     $app->get('/iplocation/{ip}', function ($ip) {
-        return "<h1> The Country: ".ip_location($ip)->country . "</h1>";
+        $location = ip_location($ip);
+        return "<h1> The Country: " .  $location->country . "</h1>";
     });
-
 
     $app->run();
 
